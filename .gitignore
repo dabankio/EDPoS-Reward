@@ -1,0 +1,8 @@
+.vs/
+Common/bin
+Common/obj
+EDPoS_RewardTask/bin
+EDPoS_RewardTask/obj
+EDPoS_RewardTask/Web.config
+EDPoS_RewardTask/app.config
+EDPoS_RewardTask/packages
