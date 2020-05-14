@@ -40,8 +40,6 @@ namespace EDPoS_Reward.BlockRewards
                 {
                     startHeight = lastBlockHeight + 1;
                 }
-                //The fee of the EDPOS Node
-                Dictionary<string, decimal> vote_fee = new Dictionary<string, decimal>();
 
                 //Get effective height
                 int newHeight = dataProvider.ReturnIntValue(@"select height from Block where is_useful = 1 order by height desc limit 1 ");
@@ -59,18 +57,13 @@ namespace EDPoS_Reward.BlockRewards
                 if (dt.Rows.Count > 0)
                 {
                     lastBlockHeight = dt.AsEnumerable().Max(x => x.Field<int>("height"));
-                    string msg = "[Daily Reward] Scope of index : [" + startHeight + " ——>> " + lastBlockHeight + "]";
+                    string msg = "[Block Reward] Scope of index : [" + startHeight + " ——>> " + lastBlockHeight + "]";
                     Console.WriteLine(msg);
                     Debuger.Trace(msg);
-                    DataTable dtFee = dataProvider.ExecDataSet("select address,fee from Pool where type='dpos'").Tables[0];
-                    foreach (DataRow r in dtFee.Rows)
-                    {
-                        vote_fee.Add(r["address"].ToString(), decimal.Parse(r["fee"].ToString()));
-                    }
                 }
                 else
                 {
-                    string msg = "[Daily Reward] waiting for the next DPoS block. The next round of the compute will starts at the height of " + startHeight;
+                    string msg = "[Block Reward] waiting for the next DPoS block. The next round of the compute will starts at the height of " + startHeight;
                     Console.WriteLine(msg);
                     Debuger.Trace(msg);
                     return false;
@@ -169,13 +162,16 @@ namespace EDPoS_Reward.BlockRewards
                     }
                     decimal total = merge_voters.Select(x => x.Value).Sum();
 
+                    var reward_address = r["reward_address"].ToString();
+                    var reward_money = Decimal.Parse(r["reward_money"].ToString());
+                    var reward_date = DateTime.Parse(r["time"].ToString()).ToString("yyyy-MM-dd");
+                    var block_height = r["height"].ToString();
+
                     foreach (KeyValuePair<string, decimal> kv in merge_voters)
                     {
                         if (kv.Value != 0)
                         {
-                            listSql.Add(@"insert into DposRewardDetails(
-                                dpos_addr,client_addr,vote_amount,reward_money,reward_date,block_height) 
-                                values('" + r["reward_address"].ToString() + "','" + kv.Key + "'," + kv.Value + "," + kv.Value / total * Decimal.Parse(r["reward_money"].ToString()) * (1 - (vote_fee.ContainsKey(r["reward_address"].ToString()) ? vote_fee[r["reward_address"].ToString()] : (decimal)0.05)) + ",'" + r["time"].ToString() + "'," + r["height"].ToString() + ")");
+                            listSql.Add(@"insert into DposRewardDetails(dpos_addr,client_addr,vote_amount,reward_money,reward_date,block_height) values('" + reward_address + "','" + kv.Key + "'," + kv.Value + "," + kv.Value / total * reward_money + ",'" + reward_date + "'," + block_height + ")");
                         }
                     }
                     // Set the state of the block as 1,it shows that this block has been used

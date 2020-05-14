@@ -27,20 +27,20 @@ namespace EDPoS_Reward.DailyRewards
                 // if the program had been interrupted, 
                 // the next compute will be after the next digit of the serial number of the previous round of calculations
                 int lastIndex = dataProvider.ReturnIntValue("select max(id) from DposRewardDetails where reward_state=1");
-                if (lastIndex <= 0)
+                if (lastIndex > 0)
                 {
-                    return false;
-                }
-                startIndex = lastIndex + 1;
+                    startIndex = lastIndex + 1;
+                }                
 
                 int endIndex = dataProvider.ReturnIntValue("select max(id) from (select id from DposRewardDetails where reward_state=0 order by id limit 1000) t");
                 if (endIndex <= 0)
                 {
-                    Console.WriteLine("[DailyReward] waiting ...");
-                    Debuger.TraceAlone("[DailyReward] waiting ...", "daily");
+                    Console.WriteLine("[Daily Reward] waiting ...");
+                    Debuger.TraceAlone("[Daily Reward] waiting ...", "daily");
                     return false;
                 }
 
+                Console.WriteLine("[Daily Reward] Scope of index : [" + startIndex + " ——>> " + endIndex + "]");
                 Debuger.TraceAlone("[Daily Reward] Scope of index : [" + startIndex + " ——>> " + endIndex + "]", "daily");
                 dataProvider.AddParam("?startIndex", startIndex);
                 dataProvider.AddParam("?endIndex", endIndex);
@@ -48,14 +48,15 @@ namespace EDPoS_Reward.DailyRewards
                 foreach (DataRow r in dt.Rows)
                 {
                     //  Summary of historical income data and dynamic summary of day income
-                    exist = dataProvider.Exist("select id from DposDailyReward where dpos_addr='" + r["dpos_addr"].ToString() + "' and client_addr='" + r["client_addr"].ToString() + "' and payment_date='" + r["reward_date"].ToString() + "'");
+                    var reward_date = DateTime.Parse(r["reward_date"].ToString()).ToString("yyyy-MM-dd");
+                    exist = dataProvider.Exist("select id from DposDailyReward where dpos_addr='" + r["dpos_addr"].ToString() + "' and client_addr='" + r["client_addr"].ToString() + "' and payment_date='" + reward_date + "'");
                     if (exist)
                     {
-                        listSql.Add("update DposDailyReward set payment_money=payment_money+" + r["reward"].ToString() + " where dpos_addr='" + r["dpos_addr"].ToString() + "' and client_addr='" + r["client_addr"].ToString() + "' and payment_date='" + r["reward_date"].ToString() + "'");
+                        listSql.Add("update DposDailyReward set payment_money=payment_money+" + r["reward"].ToString() + " where dpos_addr='" + r["dpos_addr"].ToString() + "' and client_addr='" + r["client_addr"].ToString() + "' and payment_date='" + reward_date + "'");
                     }
                     else
                     {
-                        listSql.Add("insert into DposDailyReward(dpos_addr,client_addr,payment_date,payment_money) values('" + r["dpos_addr"].ToString() + "','" + r["client_addr"].ToString() + "','" + r["reward_date"].ToString() + "'," + r["reward"].ToString() + ")");
+                        listSql.Add("insert into DposDailyReward(dpos_addr,client_addr,payment_date,payment_money) values('" + r["dpos_addr"].ToString() + "','" + r["client_addr"].ToString() + "','" + reward_date + "'," + r["reward"].ToString() + ")");
                     }
                 }
 

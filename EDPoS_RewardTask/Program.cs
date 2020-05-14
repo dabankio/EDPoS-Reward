@@ -19,14 +19,21 @@ namespace EDPoS_RewardTask
             thrBlockReward = new Thread(new ThreadStart(BlockReward));
             thrDailyReward = new Thread(new ThreadStart(DailyReward));
 
-            if (thrBlockReward.ThreadState == ThreadState.Stopped || thrBlockReward.ThreadState == ThreadState.Unstarted)
+            try
             {
-                thrBlockReward.Start();
-            }
+                if (thrBlockReward.ThreadState == ThreadState.Stopped || thrBlockReward.ThreadState == ThreadState.Unstarted)
+                {
+                    thrBlockReward.Start();
+                }
 
-            if (thrDailyReward.ThreadState == ThreadState.Stopped || thrDailyReward.ThreadState == ThreadState.Unstarted)
+                if (thrDailyReward.ThreadState == ThreadState.Stopped || thrDailyReward.ThreadState == ThreadState.Unstarted)
+                {
+                    thrDailyReward.Start();
+                }
+            }
+            catch (Exception e)
             {
-                thrDailyReward.Start();
+                throw e;
             }
         }
 
