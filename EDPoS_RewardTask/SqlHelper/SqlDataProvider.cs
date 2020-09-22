@@ -332,7 +332,9 @@ namespace EDPoS_Reward.SqlHelper
             {
                 this.Close();
             }
-            return Decimal.Parse(returnValue.ToString());
+            decimal retValue;
+            decimal.TryParse(returnValue.ToString(), out retValue);
+            return retValue;
         }
 
         /// <summary>

@@ -69,6 +69,7 @@ namespace EDPoS_Reward.BlockRewards
                     return false;
                 }
 
+                int minid = GetTxMinID();
                 foreach (DataRow r in dt.Rows)
                 {
                     // Voters is used to record the number of voters and casts
@@ -81,32 +82,41 @@ namespace EDPoS_Reward.BlockRewards
                     List<string> listSql = new List<string>();
                     int maxid = GetTxMaxID(r["hash"].ToString());
 
-                    // Get the tokens that the EDPOS Node have voted to itself
-                    dataProvider.AddParam("?block_hash", r["hash"].ToString());
-                    dataProvider.AddParam("?address", r["reward_address"].ToString());
-                    decimal selfVote = dataProvider.ReturnDecimalValue(@"select amount from Tx 
-                        where block_hash=?block_hash 
-                        and `to`=?address and type='certification'");
-
-                    // If no data, get the previous block's data
-                    if (selfVote == 0)
+                    decimal selfVote = 0, selfIn = 0, selfOut = 0;
+                    
+                    if (int.Parse(r["height"].ToString()) <= 248997)
                     {
+                        dataProvider.AddParam("?block_hash", r["hash"].ToString());
                         dataProvider.AddParam("?address", r["reward_address"].ToString());
-                        selfVote = dataProvider.ReturnDecimalValue(@"select vote_amount from DposRewardDetails 
-                            where dpos_addr=?address 
-                            and client_addr=?address 
-                            order by block_height desc limit 1");
-                        string msg = "[" + r["reward_address"].ToString() + "]Node self-cast data monitoring: [" + r["height"].ToString() + "]" + selfVote.ToString();
-                        Console.WriteLine(msg);
-                        Debuger.Trace(msg);
-
+                        selfVote = dataProvider.ReturnDecimalValue("select amount from Tx where block_hash=?block_hash and `to`=?address and type='certification' and n=0");
                         if (selfVote == 0)
                         {
-                            msg = "[" + r["reward_address"].ToString() + "][" + r["height"].ToString() + "]" + selfVote.ToString();
+                            dataProvider.AddParam("?address", r["reward_address"].ToString());
+                            selfVote = dataProvider.ReturnDecimalValue("select vote_amount from DposRewardDetails where dpos_addr=?address and client_addr=?address order by block_height desc limit 1");
+
+                            string msg = "["+ r["reward_address"].ToString() + "] height: " + r["height"].ToString() + ", selfVote: "+ selfVote.ToString();
                             Console.WriteLine(msg);
                             Debuger.Trace(msg);
-                            return false;
                         }
+                    }
+                    else
+                    {
+                        dataProvider.AddParam("?minid", minid);
+                        dataProvider.AddParam("?maxid", maxid - 1);
+                        dataProvider.AddParam("?address", r["reward_address"].ToString());
+
+                        selfIn = dataProvider.ReturnDecimalValue("select sum(amount) from Tx where `to`=?address and (form<>?address or (type='certification' and n=1)) and id between ?minid and ?maxid");
+
+                        dataProvider.AddParam("?minid", minid);
+                        dataProvider.AddParam("?maxid", maxid);
+                        dataProvider.AddParam("?address", r["reward_address"].ToString());
+
+                        selfOut = dataProvider.ReturnDecimalValue("select sum(amount) from Tx where form=?address and `to`<>?address and id between ?minid and ?maxid");
+                        selfVote = selfIn - selfOut;
+                        string msg = "[" + r["reward_address"].ToString() + "] height: " + r["height"].ToString() + ",selfVote: " + selfVote.ToString() + " selfIn:" + selfIn.ToString() + " selfOut: " + selfOut.ToString();
+
+                        Console.WriteLine(msg);
+                        Debuger.Trace(msg);
                     }
 
                     if (voters.ContainsKey(r["reward_address"].ToString()))
@@ -172,6 +182,9 @@ namespace EDPoS_Reward.BlockRewards
                         if (kv.Value != 0)
                         {
                             listSql.Add(@"insert into DposRewardDetails(dpos_addr,client_addr,vote_amount,reward_money,reward_date,block_height) values('" + reward_address + "','" + kv.Key + "'," + kv.Value + "," + kv.Value / total * reward_money + ",'" + reward_date + "'," + block_height + ")");
+
+                            // 本节点单位收益 = reward_money / total
+                            // 平均单位收益 = 
                         }
                     }
                     // Set the state of the block as 1,it shows that this block has been used
@@ -199,6 +212,11 @@ namespace EDPoS_Reward.BlockRewards
         {
             dataProvider.AddParam("?block_hash", block_hash);
             return dataProvider.ReturnIntValue("select max(id) from Tx where block_hash=?block_hash");
+        }
+
+        private int GetTxMinID()
+        {
+            return dataProvider.ReturnIntValue("select min(t.id) from Tx t join Block b on t.block_hash=b.hash where b.height=248969");
         }
     }
 }

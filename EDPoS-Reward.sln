@@ -5,7 +5,7 @@ VisualStudioVersion = 16.0.29926.136
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EDPoS_RewardTask", "EDPoS_RewardTask\EDPoS_RewardTask.csproj", "{E9739472-CAED-423E-AC31-1957CC863F46}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Common", "Common\Common.csproj", "{DAD26B74-96B4-4BB4-9C87-D307C0FBEFD5}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Common", "Common\Common.csproj", "{DAD26B74-96B4-4BB4-9C87-D307C0FBEFD5}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
