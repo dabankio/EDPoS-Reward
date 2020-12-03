@@ -173,23 +173,14 @@ namespace EDPoS_Reward.SqlHelper
         /// <returns></returns>
         public bool Exist(string Sql)
         {
-            bool exist;
             this.Open();
             cmd.CommandText = Sql;
             cmd.CommandType = CommandType.Text;
             MySqlDataReader dr = cmd.ExecuteReader();
             cmd.Parameters.Clear();
-            if (dr.HasRows)
-            {
-                exist = true;   //记录存在
-            }
-            else
-            {
-                exist = false;  //记录不存在
-            }
             dr.Close();
             this.Close();
-            return exist;
+            return dr.HasRows;
         }
 
         /// <summary>
@@ -368,7 +359,6 @@ namespace EDPoS_Reward.SqlHelper
             {
                 this.Close();
             }
-
         }
 
         /// <summary>
