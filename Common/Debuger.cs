@@ -9,7 +9,7 @@ namespace EDPoS_Reward.Common
 {
     public static class Debuger
     {
-        public static string strLogFolder = Path.GetDirectoryName(Process.GetCurrentProcess().MainModule.FileName) + @"\BBCRewardLog\";
+        public static string strLogFolder = Path.Combine(Directory.GetCurrentDirectory(), "BBCRewardLog");
 
         /// <summary>
         /// 输出调试信息
