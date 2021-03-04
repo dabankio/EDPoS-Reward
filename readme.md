@@ -3,6 +3,8 @@
 
 ## install as systemd service
 
+sudo snap install dotnet-sdk --classic
+
 ```bash
 touch /etc/systemd/system/kestrel-<your_app>.service
 
